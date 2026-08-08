@@ -10,7 +10,8 @@ def ensure_schema(client) -> None:
 
     client.command(f"CREATE DATABASE IF NOT EXISTS {CLICKHOUSE_DB}")
 
-    client.command(f"""
+    client.command(
+        f"""
         CREATE TABLE IF NOT EXISTS {CLICKHOUSE_DB}.imdb_titles_enriched (
             tconst          String,
             title_type      LowCardinality(String),
@@ -31,9 +32,11 @@ def ensure_schema(client) -> None:
         PARTITION BY toUInt16(coalesce(start_year, 0) / 10) * 10
         ORDER BY (title_type, coalesce(start_year, 0), tconst)
         SETTINGS index_granularity = 8192
-    """)
+    """
+    )
 
-    client.command(f"""
+    client.command(
+        f"""
         CREATE TABLE IF NOT EXISTS {CLICKHOUSE_DB}.imdb_ratings_by_type_year (
             title_type      LowCardinality(String),
             start_year      UInt16,
@@ -43,6 +46,7 @@ def ensure_schema(client) -> None:
         )
         ENGINE = SummingMergeTree()
         ORDER BY (title_type, start_year)
-    """)
+    """
+    )
 
     logger.info("  Schema verified/created successfully")

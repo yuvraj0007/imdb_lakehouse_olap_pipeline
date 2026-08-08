@@ -25,20 +25,23 @@ def _log_row_counts(client) -> None:
     total = result.result_rows[0][0]
     logger.info(f"Total rows loaded: {total:,}")
 
-    result = client.query(f"""
+    result = client.query(
+        f"""
         SELECT title_type, count() as cnt
         FROM {CLICKHOUSE_DB}.imdb_titles_enriched
         GROUP BY title_type
         ORDER BY cnt DESC
         LIMIT 10
-    """)
+    """
+    )
     logger.info("Rows by title_type:")
     for row in result.result_rows:
         logger.info(f"  {row[0]:20s}: {row[1]:>10,}")
 
 
 def _log_partition_info(client) -> None:
-    result = client.query(f"""
+    result = client.query(
+        f"""
         SELECT
             partition,
             count() as parts,
@@ -51,7 +54,8 @@ def _log_partition_info(client) -> None:
         GROUP BY partition
         ORDER BY partition
         LIMIT 15
-    """)
+    """
+    )
     logger.info("Partition summary (top 15):")
     for row in result.result_rows:
         logger.info(f"  {row[0]:<12} {row[1]:<8} {row[2]:<12,} {row[3]:<10}")
@@ -59,25 +63,29 @@ def _log_partition_info(client) -> None:
 
 def _log_query_timing(client) -> None:
     start = time.time()
-    client.query(f"""
+    client.query(
+        f"""
         SELECT title_type, count(), avg(average_rating)
         FROM {CLICKHOUSE_DB}.imdb_titles_enriched
         WHERE start_year >= 2020
         GROUP BY title_type
         ORDER BY count() DESC
-    """)
+    """
+    )
     elapsed_ms = (time.time() - start) * 1000
     logger.info(f"  Aggregate query (titles since 2020): {elapsed_ms:.1f}ms")
 
     start = time.time()
-    client.query(f"""
+    client.query(
+        f"""
         SELECT primary_title, average_rating, num_votes
         FROM {CLICKHOUSE_DB}.imdb_titles_enriched
         WHERE title_type = 'movie'
           AND num_votes > 100000
         ORDER BY average_rating DESC
         LIMIT 10
-    """)
+    """
+    )
     elapsed_ms = (time.time() - start) * 1000
     logger.info(f"  Top rated movies (>100K votes): {elapsed_ms:.1f}ms")
 

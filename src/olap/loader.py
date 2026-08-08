@@ -106,7 +106,8 @@ def populate_aggregation_table(client) -> None:
 
     client.command(f"TRUNCATE TABLE IF EXISTS {CLICKHOUSE_DB}.imdb_ratings_by_type_year")
 
-    client.command(f"""
+    client.command(
+        f"""
         INSERT INTO {CLICKHOUSE_DB}.imdb_ratings_by_type_year
         SELECT
             title_type,
@@ -117,7 +118,8 @@ def populate_aggregation_table(client) -> None:
         FROM {CLICKHOUSE_DB}.imdb_titles_enriched
         WHERE average_rating IS NOT NULL
         GROUP BY title_type, start_year
-    """)
+    """
+    )
 
     count = client.query(f"SELECT count() FROM {CLICKHOUSE_DB}.imdb_ratings_by_type_year").result_rows[0][0]
     logger.info(f"  Aggregation table populated: {count:,} rows")
