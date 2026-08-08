@@ -1,0 +1,42 @@
+groups:
+  - name: pipeline_alerts
+    rules:
+      - alert: ClickHouseDown
+        expr: up{job="clickhouse"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: clickhouse
+        annotations:
+          summary: "ClickHouse instance is down"
+          description: "ClickHouse instance {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: SparkMasterDown
+        expr: up{job="spark-master"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: spark
+        annotations:
+          summary: "Spark Master is down"
+          description: "Spark Master instance {{ $labels.instance }} has been down for more than 1 minute."
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage on {{ $labels.instance }} is above 80% (current value: {{ $value }}%)."
+
+      - alert: ETLJobFailed
+        expr: spark_job_status{status="FAILED"} > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: etl
+        annotations:
+          summary: "ETL job has failed"
+          description: "An ETL job on {{ $labels.instance }} has failed. Job: {{ $labels.job_name }}."

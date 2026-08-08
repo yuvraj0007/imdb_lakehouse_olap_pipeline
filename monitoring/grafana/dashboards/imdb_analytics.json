@@ -1,0 +1,195 @@
+{
+  "uid": "imdb-analytics",
+  "title": "IMDb Analytics Dashboard",
+  "description": "Business intelligence on IMDb content library — ClickHouse OLAP",
+  "tags": ["imdb", "analytics", "clickhouse"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 2,
+  "refresh": "",
+  "schemaVersion": 39,
+  "style": "dark",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 100,
+      "title": "",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 101,
+      "title": "Total Titles",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#6C63FF", "mode": "fixed" }, "unit": "short" } },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT count() AS value FROM imdb.imdb_titles_enriched", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 102,
+      "title": "Movies",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#FF6384", "mode": "fixed" }, "unit": "short" } },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT count() AS value FROM imdb.imdb_titles_enriched WHERE title_type = 'movie'", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 103,
+      "title": "TV Series",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#36A2EB", "mode": "fixed" }, "unit": "short" } },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT count() AS value FROM imdb.imdb_titles_enriched WHERE title_type = 'tvSeries'", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 104,
+      "title": "Avg Rating",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#FFCE56", "mode": "fixed" }, "decimals": 2 } },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT round(avg(average_rating), 2) AS value FROM imdb.imdb_titles_enriched WHERE average_rating IS NOT NULL", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 105,
+      "title": "Total Engagement",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#4BC0C0", "mode": "fixed" }, "unit": "short" } },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT sum(num_votes) AS value FROM imdb.imdb_titles_enriched", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 106,
+      "title": "Genres",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#9966FF", "mode": "fixed" }, "unit": "short" } },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT uniq(arrayJoin(splitByString(',', genres))) AS value FROM imdb.imdb_titles_enriched WHERE genres != 'Unknown'", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 1,
+      "title": "Content Distribution",
+      "type": "piechart",
+      "gridPos": { "h": 10, "w": 6, "x": 0, "y": 5 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } } },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "values": ["value", "percent"] }, "pieType": "donut", "tooltip": { "mode": "single" }, "reduceOptions": { "calcs": ["sum"] } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT title_type, count() AS count FROM imdb.imdb_titles_enriched GROUP BY title_type ORDER BY count DESC", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 2,
+      "title": "Top Rated Movies (>100K Votes)",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 18, "x": 6, "y": 5 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto", "cellOptions": { "type": "auto" } } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "rating" }, "properties": [{ "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "gradient" } }, { "id": "color", "value": { "mode": "continuous-GrYlRd" } }, { "id": "min", "value": 8 }, { "id": "max", "value": 10 }] },
+          { "matcher": { "id": "byName", "options": "votes" }, "properties": [{ "id": "unit", "value": "short" }] },
+          { "matcher": { "id": "byName", "options": "title" }, "properties": [{ "id": "custom.width", "value": 300 }] }
+        ]
+      },
+      "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": false } },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT primary_title AS title, start_year AS year, average_rating AS rating, num_votes AS votes, genres FROM imdb.imdb_titles_enriched WHERE title_type = 'movie' AND num_votes > 100000 ORDER BY average_rating DESC, num_votes DESC LIMIT 10", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 3,
+      "title": "Genre Engagement (Total Votes)",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 15 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-BlPu" }, "custom": { "fillOpacity": 85, "gradientMode": "scheme", "axisBorderShow": true }, "unit": "short" } },
+      "options": { "orientation": "horizontal", "legend": { "displayMode": "hidden" }, "tooltip": { "mode": "single" }, "barWidth": 0.7 },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT arrayJoin(splitByString(',', genres)) AS genre, sum(num_votes) AS engagement FROM imdb.imdb_titles_enriched WHERE average_rating IS NOT NULL AND genres != 'Unknown' GROUP BY genre ORDER BY engagement DESC LIMIT 12", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 4,
+      "title": "Quality by Decade",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 15 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-GrYlRd" }, "custom": { "fillOpacity": 80, "gradientMode": "scheme", "axisBorderShow": true }, "decimals": 1, "min": 5, "max": 10 } },
+      "options": { "orientation": "vertical", "legend": { "displayMode": "hidden" }, "tooltip": { "mode": "multi" }, "barWidth": 0.6 },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT concat(toString(toUInt16(start_year / 10) * 10), 's') AS decade, round(avg(average_rating), 2) AS avg_rating FROM imdb.imdb_titles_enriched WHERE start_year IS NOT NULL AND average_rating IS NOT NULL GROUP BY decade ORDER BY decade", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 5,
+      "title": "Best TV Series",
+      "type": "table",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "rating" }, "properties": [{ "id": "custom.cellOptions", "value": { "type": "gauge", "mode": "gradient" } }, { "id": "color", "value": { "mode": "continuous-GrYlRd" } }, { "id": "min", "value": 7 }, { "id": "max", "value": 10 }] },
+          { "matcher": { "id": "byName", "options": "votes" }, "properties": [{ "id": "unit", "value": "short" }] }
+        ]
+      },
+      "options": { "showHeader": true, "cellHeight": "sm" },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT primary_title AS series, start_year AS start, end_year AS end, average_rating AS rating, num_votes AS votes, genres FROM imdb.imdb_titles_enriched WHERE title_type = 'tvSeries' AND num_votes > 50000 ORDER BY average_rating DESC LIMIT 8", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 6,
+      "title": "Runtime vs Rating (Movies)",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 75, "gradientMode": "opacity", "axisBorderShow": true }, "decimals": 2 } },
+      "options": { "orientation": "vertical", "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" }, "barWidth": 0.5 },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT multiIf(runtime_minutes < 30, 'Under 30m', runtime_minutes <= 60, '30-60m', runtime_minutes <= 120, '1-2 hrs', runtime_minutes <= 180, '2-3 hrs', '3+ hrs') AS bucket, round(avg(average_rating), 2) AS avg_rating, count() AS count FROM imdb.imdb_titles_enriched WHERE runtime_minutes IS NOT NULL AND runtime_minutes > 0 AND title_type = 'movie' AND average_rating IS NOT NULL GROUP BY bucket ORDER BY avg_rating DESC", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 7,
+      "title": "Genre Quality Ranking",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 33 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "mode": "continuous-GrYlRd" }, "custom": { "fillOpacity": 85, "gradientMode": "scheme", "axisBorderShow": true }, "decimals": 2, "min": 5, "max": 10 } },
+      "options": { "orientation": "horizontal", "legend": { "displayMode": "hidden" }, "tooltip": { "mode": "single" }, "barWidth": 0.7 },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT arrayJoin(splitByString(',', genres)) AS genre, round(avg(average_rating), 2) AS avg_rating FROM imdb.imdb_titles_enriched WHERE average_rating IS NOT NULL AND genres != 'Unknown' GROUP BY genre HAVING count() > 1 ORDER BY avg_rating DESC", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 8,
+      "title": "Content Production Timeline",
+      "type": "barchart",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 33 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "fillOpacity": 75, "stacking": { "mode": "normal" }, "axisBorderShow": true } } },
+      "options": { "orientation": "vertical", "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" }, "barWidth": 0.8 },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT toString(start_year) AS year, title_type, count() AS count FROM imdb.imdb_titles_enriched WHERE start_year IS NOT NULL AND start_year >= 1950 GROUP BY year, title_type ORDER BY year", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 9,
+      "title": "Most Episodes (Series)",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 42 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#8F3BB8", "mode": "fixed" }, "custom": { "fillOpacity": 75, "gradientMode": "opacity", "axisBorderShow": true } } },
+      "options": { "orientation": "horizontal", "legend": { "displayMode": "hidden" }, "tooltip": { "mode": "single" }, "barWidth": 0.6 },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT p.primary_title AS series, count() AS episodes FROM imdb.imdb_titles_enriched AS e INNER JOIN imdb.imdb_titles_enriched AS p ON e.parent_tconst = p.tconst WHERE e.title_type = 'tvEpisode' GROUP BY series ORDER BY episodes DESC LIMIT 10", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    },
+    {
+      "id": 10,
+      "title": "Rating Distribution",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 42 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" },
+      "fieldConfig": { "defaults": { "color": { "fixedColor": "#FF9830", "mode": "fixed" }, "custom": { "fillOpacity": 65, "gradientMode": "opacity", "axisBorderShow": true } } },
+      "options": { "orientation": "vertical", "legend": { "displayMode": "hidden" }, "tooltip": { "mode": "single" }, "barWidth": 0.6 },
+      "targets": [{ "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse-ds" }, "queryType": "sql", "rawSql": "SELECT concat(toString(toUInt8(floor(average_rating))), '-', toString(toUInt8(floor(average_rating)) + 1)) AS range, count() AS count FROM imdb.imdb_titles_enriched WHERE average_rating IS NOT NULL GROUP BY range ORDER BY range", "refId": "A", "format": 1, "meta": { "builderOptions": { "mode": "list" } } }]
+    }
+  ]
+}

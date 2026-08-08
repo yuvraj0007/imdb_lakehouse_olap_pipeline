@@ -1,0 +1,199 @@
+# docker-compose.yml
+# Compatible with both Docker Compose and Podman Compose
+# Usage: podman-compose up -d  OR  docker compose up -d
+#
+# Services:
+#   - spark-master    : PySpark cluster master
+#   - spark-worker    : PySpark cluster worker
+#   - clickhouse      : OLAP engine (ClickHouse)
+#   - prometheus      : Metrics collection
+#   - grafana         : Dashboards & visualization
+#   - node-exporter   : Host metrics
+
+version: "3.8"
+
+services:
+  # ═══════════════════════════════════════════════════════════════
+  # SPARK MASTER
+  # ═══════════════════════════════════════════════════════════════
+  spark-master:
+    build:
+      context: .
+      dockerfile: docker/spark.Dockerfile
+    container_name: spark-master
+    hostname: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_NO_DAEMONIZE=true
+      - PYTHONPATH=/opt/spark
+    command: /opt/spark/sbin/start-master.sh
+    ports:
+      - "8085:8080"   # Spark Master Web UI
+      - "7077:7077"   # Spark Master RPC
+    volumes:
+      - ./data:/opt/spark/data:z
+      - ./src:/opt/spark/src:z
+    networks:
+      - imdb-pipeline
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════
+  # SPARK WORKER
+  # ═══════════════════════════════════════════════════════════════
+  spark-worker:
+    build:
+      context: .
+      dockerfile: docker/spark.Dockerfile
+    container_name: spark-worker
+    hostname: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY:-2g}
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES:-2}
+      - SPARK_NO_DAEMONIZE=true
+      - PYTHONPATH=/opt/spark
+    command: /opt/spark/sbin/start-worker.sh spark://spark-master:7077
+    ports:
+      - "8081:8081"   # Spark Worker Web UI
+    volumes:
+      - ./data:/opt/spark/data:z
+      - ./src:/opt/spark/src:z
+    networks:
+      - imdb-pipeline
+    depends_on:
+      spark-master:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════
+  # CLICKHOUSE (OLAP ENGINE)
+  # ═══════════════════════════════════════════════════════════════
+  clickhouse:
+    image: docker.io/clickhouse/clickhouse-server:24.3-alpine
+    container_name: clickhouse
+    hostname: clickhouse
+    environment:
+      - CLICKHOUSE_DB=${CLICKHOUSE_DB:-imdb}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-clickhouse}
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "8123:8123"   # HTTP interface
+      - "9000:9000"   # Native TCP interface
+      - "9363:9363"   # Prometheus metrics endpoint
+    volumes:
+      - ./data/lake:/var/lib/clickhouse/user_files/lake:z
+      - ./sql/ddl.sql:/docker-entrypoint-initdb.d/001_ddl.sql:z
+      - ./clickhouse/config/users.xml:/etc/clickhouse-server/users.d/users.xml:z
+      - ./clickhouse/config/prometheus.xml:/etc/clickhouse-server/config.d/prometheus.xml:z
+      - clickhouse-data:/var/lib/clickhouse
+    networks:
+      - imdb-pipeline
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--password", "${CLICKHOUSE_PASSWORD:-clickhouse}", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  # ═══════════════════════════════════════════════════════════════
+  # PROMETHEUS (Metrics Collection)
+  # ═══════════════════════════════════════════════════════════════
+  prometheus:
+    image: docker.io/prom/prometheus:v2.51.0
+    container_name: prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"   # Prometheus Web UI
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:z
+      - ./monitoring/alerting/alerts.yml:/etc/prometheus/alerts.yml:z
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+    networks:
+      - imdb-pipeline
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════
+  # GRAFANA (Dashboards & Visualization)
+  # ═══════════════════════════════════════════════════════════════
+  grafana:
+    image: docker.io/grafana/grafana:10.4.0
+    container_name: grafana
+    hostname: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/var/lib/grafana/dashboards/pipeline_overview.json
+    ports:
+      - "3000:3000"   # Grafana Web UI
+    volumes:
+      - ./monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:z
+      - ./monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:z
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:z
+      - grafana-data:/var/lib/grafana
+    networks:
+      - imdb-pipeline
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  # ═══════════════════════════════════════════════════════════════
+  # NODE EXPORTER (Host Metrics)
+  # ═══════════════════════════════════════════════════════════════
+  node-exporter:
+    image: docker.io/prom/node-exporter:v1.7.0
+    container_name: node-exporter
+    hostname: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - imdb-pipeline
+    restart: unless-stopped
+
+networks:
+  imdb-pipeline:
+    driver: bridge
+
+volumes:
+  clickhouse-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local

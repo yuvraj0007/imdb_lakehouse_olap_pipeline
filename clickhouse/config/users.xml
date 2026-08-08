@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!--
+  ClickHouse User Configuration
+  ═══════════════════════════════════════════════════════════════════════
+  This configures the default user with appropriate settings for
+  the IMDb analytics pipeline.
+-->
+<clickhouse>
+    <profiles>
+        <default>
+            <!-- Allow large result sets for analytics -->
+            <max_result_rows>1000000</max_result_rows>
+            <max_result_bytes>1000000000</max_result_bytes>
+            <!-- Optimize for analytical queries -->
+            <max_threads>4</max_threads>
+            <max_memory_usage>2000000000</max_memory_usage>
+            <!-- Allow reading from local files (for Parquet import) -->
+            <allow_introspection_functions>1</allow_introspection_functions>
+        </default>
+    </profiles>
+
+    <users>
+        <default>
+            <profile>default</profile>
+            <quota>default</quota>
+            <!-- Allow access from any host (local dev only) -->
+            <networks>
+                <ip>::/0</ip>
+            </networks>
+            <!-- Access management -->
+            <access_management>1</access_management>
+        </default>
+    </users>
+
+    <quotas>
+        <default>
+            <interval>
+                <duration>3600</duration>
+                <queries>0</queries>
+                <errors>0</errors>
+                <result_rows>0</result_rows>
+                <read_rows>0</read_rows>
+                <execution_time>0</execution_time>
+            </interval>
+        </default>
+    </quotas>
+</clickhouse>

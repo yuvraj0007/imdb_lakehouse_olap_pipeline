@@ -1,0 +1,276 @@
+{
+  "uid": "imdb-pipeline-overview",
+  "title": "Pipeline Infrastructure Monitor",
+  "description": "Real-time health and performance monitoring for the IMDb data pipeline services",
+  "tags": ["imdb", "pipeline", "clickhouse", "spark"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "style": "dark",
+  "time": { "from": "now-30m", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 2,
+      "title": "ClickHouse",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "DOWN", "color": "red" } }, "type": "value" },
+            { "options": { "1": { "text": "UP", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "up{job=\"clickhouse\"}", "legendFormat": "ClickHouse", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 3,
+      "title": "Spark Master",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "NO METRICS", "color": "yellow" } }, "type": "value" },
+            { "options": { "1": { "text": "UP", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": { "steps": [{ "color": "yellow", "value": null }, { "color": "green", "value": 1 }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "up{job=\"spark-master\"}", "legendFormat": "Spark", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 4,
+      "title": "Prometheus",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "DOWN", "color": "red" } }, "type": "value" },
+            { "options": { "1": { "text": "UP", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "up{job=\"prometheus\"}", "legendFormat": "Prometheus", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 5,
+      "title": "Node Exporter",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "options": { "0": { "text": "DOWN", "color": "red" } }, "type": "value" },
+            { "options": { "1": { "text": "UP", "color": "green" } }, "type": "value" }
+          ],
+          "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
+          "color": { "mode": "thresholds" },
+          "noValue": "N/A"
+        }
+      },
+      "options": { "colorMode": "background_solid", "graphMode": "none", "justifyMode": "center", "textMode": "value", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "up{job=\"node-exporter\"}", "legendFormat": "Node", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 10,
+      "title": "ClickHouse Queries",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "blue", "value": null }] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "textMode": "value_and_name", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "ClickHouseProfileEvents_Query", "legendFormat": "Total Queries", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 11,
+      "title": "ClickHouse Memory",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 500000000 }, { "color": "red", "value": 1500000000 }] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "textMode": "value_and_name", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "ClickHouseMetrics_MemoryTracking", "legendFormat": "Memory Used", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 12,
+      "title": "Active Connections",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 50 }] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "textMode": "value_and_name", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "ClickHouseMetrics_HTTPConnection", "legendFormat": "HTTP", "refId": "A", "instant": true },
+        { "expr": "ClickHouseMetrics_TCPConnection", "legendFormat": "TCP", "refId": "B", "instant": true }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Active Parts",
+      "type": "stat",
+      "gridPos": { "h": 3, "w": 6, "x": 18, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds" }, "thresholds": { "steps": [{ "color": "purple", "value": null }] } } },
+      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "center", "textMode": "value_and_name", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [{ "expr": "ClickHouseMetrics_PartsActive", "legendFormat": "Active Parts", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 20,
+      "title": "ClickHouse — Queries Per Second",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 25, "gradientMode": "scheme", "lineWidth": 2, "pointSize": 4, "showPoints": "auto" },
+          "color": { "mode": "palette-classic" },
+          "unit": "ops"
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "rate(ClickHouseProfileEvents_Query[1m])", "legendFormat": "All Queries", "refId": "A" },
+        { "expr": "rate(ClickHouseProfileEvents_SelectQuery[1m])", "legendFormat": "SELECT", "refId": "B" },
+        { "expr": "rate(ClickHouseProfileEvents_InsertQuery[1m])", "legendFormat": "INSERT", "refId": "C" }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "ClickHouse — Rows Processed",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "gradientMode": "scheme", "lineWidth": 2 },
+          "color": { "mode": "palette-classic" },
+          "unit": "rowsps"
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "rate(ClickHouseProfileEvents_SelectedRows[1m])", "legendFormat": "Rows Read/s", "refId": "A" },
+        { "expr": "rate(ClickHouseProfileEvents_InsertedRows[1m])", "legendFormat": "Rows Written/s", "refId": "B" }
+      ]
+    },
+    {
+      "id": 30,
+      "title": "ClickHouse — Memory Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 30, "gradientMode": "opacity", "lineWidth": 2 },
+          "color": { "fixedColor": "orange", "mode": "fixed" },
+          "unit": "bytes"
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [
+        { "expr": "ClickHouseMetrics_MemoryTracking", "legendFormat": "Memory Tracked", "refId": "A" }
+      ]
+    },
+    {
+      "id": 31,
+      "title": "Host — CPU Usage %",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 40, "gradientMode": "scheme", "lineWidth": 2 },
+          "color": { "mode": "palette-classic" },
+          "unit": "percentunit",
+          "max": 1, "min": 0
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[1m]))", "legendFormat": "CPU Used %", "refId": "A" }
+      ]
+    },
+    {
+      "id": 40,
+      "title": "Host — Memory",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": { "mode": "percentage", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 60 }, { "color": "orange", "value": 80 }, { "color": "red", "value": 90 }] },
+          "unit": "percentunit", "max": 1, "min": 0
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "showThresholdMarkers": true },
+      "targets": [{ "expr": "1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)", "legendFormat": "RAM Used", "refId": "A", "instant": true }]
+    },
+    {
+      "id": 41,
+      "title": "Host — Disk I/O",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "lineWidth": 2 },
+          "color": { "mode": "palette-classic" },
+          "unit": "Bps"
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "rate(node_disk_read_bytes_total[1m])", "legendFormat": "Read", "refId": "A" },
+        { "expr": "rate(node_disk_written_bytes_total[1m])", "legendFormat": "Write", "refId": "B" }
+      ]
+    },
+    {
+      "id": 42,
+      "title": "Host — Network",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 23 },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "drawStyle": "line", "lineInterpolation": "smooth", "fillOpacity": 20, "lineWidth": 2 },
+          "color": { "mode": "palette-classic" },
+          "unit": "Bps"
+        }
+      },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[1m])", "legendFormat": "RX", "refId": "A" },
+        { "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[1m])", "legendFormat": "TX", "refId": "B" }
+      ]
+    }
+  ]
+}
