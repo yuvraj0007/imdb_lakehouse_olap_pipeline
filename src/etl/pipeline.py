@@ -1,14 +1,18 @@
-import time
 import logging
+import time
 from datetime import datetime
 
 from pyspark.sql import SparkSession
 
-from src.config import RAW_PATH, LAKE_PATH
-from src.etl.schemas import TITLE_BASICS_SCHEMA, TITLE_RATINGS_SCHEMA, TITLE_EPISODE_SCHEMA
+from src.config import LAKE_PATH, RAW_PATH
+from src.etl.cleaners import clean_episodes, clean_ratings, clean_titles
 from src.etl.readers import read_tsv
-from src.etl.cleaners import clean_titles, clean_ratings, clean_episodes
-from src.etl.transforms import join_datasets, write_parquet, print_summary_stats
+from src.etl.schemas import (
+    TITLE_BASICS_SCHEMA,
+    TITLE_EPISODE_SCHEMA,
+    TITLE_RATINGS_SCHEMA,
+)
+from src.etl.transforms import join_datasets, print_summary_stats, write_parquet
 
 logging.basicConfig(
     level=logging.INFO,

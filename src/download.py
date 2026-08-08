@@ -1,11 +1,11 @@
-import os
-import sys
 import gzip
-import shutil
 import logging
+import os
+import shutil
+import sys
 from pathlib import Path
 
-from src.config import DATASET_SLUG, DATA_RAW_PATH, REQUIRED_FILES
+from src.config import DATA_RAW_PATH, DATASET_SLUG, REQUIRED_FILES
 
 logging.basicConfig(
     level=logging.INFO,
@@ -95,10 +95,7 @@ def main() -> None:
     output_path = Path(DATA_RAW_PATH)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    existing_files = [
-        f for f in REQUIRED_FILES
-        if (output_path / f).exists() or (output_path / f"{f}.gz").exists()
-    ]
+    existing_files = [f for f in REQUIRED_FILES if (output_path / f).exists() or (output_path / f"{f}.gz").exists()]
 
     if len(existing_files) == len(REQUIRED_FILES):
         logger.info("All required files already exist. Skipping download.")

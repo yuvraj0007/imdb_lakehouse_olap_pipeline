@@ -1,12 +1,12 @@
+import logging
 import re
 import sys
 import time
-import logging
 from pathlib import Path
 
 import pyarrow.parquet as pq
 
-from src.config import CLICKHOUSE_DB, COLUMN_ORDER, BATCH_SIZE
+from src.config import BATCH_SIZE, CLICKHOUSE_DB, COLUMN_ORDER
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +43,7 @@ def load_parquet_to_clickhouse(client, parquet_files: list[str]) -> int:
             if idx % 100 == 0 or idx == total_files:
                 elapsed = time.time() - start_time
                 rate = total_rows / elapsed if elapsed > 0 else 0
-                logger.info(
-                    f"  Progress: {idx}/{total_files} files | "
-                    f"{total_rows:,} rows | {rate:,.0f} rows/sec"
-                )
+                logger.info(f"  Progress: {idx}/{total_files} files | " f"{total_rows:,} rows | {rate:,.0f} rows/sec")
         except Exception as e:
             logger.warning(f"  Error loading {filepath}: {e}")
             continue
@@ -65,11 +62,11 @@ def _prepare_dataframe(filepath: str):
     if df.empty:
         return None
 
-    title_type_match = re.search(r'title_type=([^/]+)', filepath)
-    start_year_match = re.search(r'start_year=([^/]+)', filepath)
+    title_type_match = re.search(r"title_type=([^/]+)", filepath)
+    start_year_match = re.search(r"start_year=([^/]+)", filepath)
 
-    df['title_type'] = title_type_match.group(1) if title_type_match else None
-    df['start_year'] = int(start_year_match.group(1)) if start_year_match else None
+    df["title_type"] = title_type_match.group(1) if title_type_match else None
+    df["start_year"] = int(start_year_match.group(1)) if start_year_match else None
 
     for col in COLUMN_ORDER:
         if col not in df.columns:
@@ -77,11 +74,11 @@ def _prepare_dataframe(filepath: str):
 
     df = df[COLUMN_ORDER]
 
-    for col in ['title_type', 'primary_title', 'original_title', 'genres']:
+    for col in ["title_type", "primary_title", "original_title", "genres"]:
         if col in df.columns:
-            df[col] = df[col].fillna('')
+            df[col] = df[col].fillna("")
 
-    df['genres'] = df['genres'].replace('', 'Unknown')
+    df["genres"] = df["genres"].replace("", "Unknown")
     return df.where(df.notnull(), None)
 
 
@@ -122,7 +119,5 @@ def populate_aggregation_table(client) -> None:
         GROUP BY title_type, start_year
     """)
 
-    count = client.query(
-        f"SELECT count() FROM {CLICKHOUSE_DB}.imdb_ratings_by_type_year"
-    ).result_rows[0][0]
+    count = client.query(f"SELECT count() FROM {CLICKHOUSE_DB}.imdb_ratings_by_type_year").result_rows[0][0]
     logger.info(f"  Aggregation table populated: {count:,} rows")

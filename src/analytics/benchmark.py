@@ -1,10 +1,10 @@
-import os
 import logging
+import os
 from datetime import datetime
 from typing import Any
 
-from src.analytics.spark_runner import run_spark_benchmarks
 from src.analytics.clickhouse_runner import run_clickhouse_benchmarks
+from src.analytics.spark_runner import run_spark_benchmarks
 
 logging.basicConfig(
     level=logging.INFO,

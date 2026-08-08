@@ -12,11 +12,10 @@ Tests each transformation function in isolation:
 import os
 
 from pyspark.sql import functions as F
-from pyspark.sql.types import IntegerType, FloatType
+from pyspark.sql.types import FloatType, IntegerType
 
-from src.etl.cleaners import clean_titles, clean_ratings, clean_episodes
+from src.etl.cleaners import clean_episodes, clean_ratings, clean_titles
 from src.etl.transforms import join_datasets, write_parquet
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # clean_titles tests

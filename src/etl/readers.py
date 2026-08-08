@@ -1,7 +1,7 @@
-import os
 import logging
+import os
 
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.types import StructType
 
 from src.config import RAW_PATH

@@ -10,13 +10,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.etl.cleaners import clean_titles, clean_ratings, clean_episodes
+from src.etl.cleaners import clean_episodes, clean_ratings, clean_titles
 from src.etl.transforms import join_datasets
 
 sys.modules.setdefault("clickhouse_connect", MagicMock())
 
 from src.analytics.queries import BENCHMARK_QUERIES  # noqa: E402
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
@@ -45,11 +44,11 @@ def enriched_view(spark, titles_raw, ratings_raw, episodes_raw, tmp_output_dir):
 def spark():
     """Module-scoped SparkSession for analytics tests."""
     import tempfile
+
     from pyspark.sql import SparkSession
 
     session = (
-        SparkSession.builder
-        .master("local[2]")
+        SparkSession.builder.master("local[2]")
         .appName("IMDb_Analytics_Tests")
         .config("spark.sql.parquet.compression.codec", "snappy")
         .config("spark.sql.shuffle.partitions", "2")
@@ -68,21 +67,38 @@ def spark():
 @pytest.fixture(scope="module")
 def titles_raw(spark):
     """Module-scoped titles fixture for analytics tests."""
-    from pyspark.sql.types import StructType, StructField, StringType
+    from pyspark.sql.types import StringType, StructField, StructType
 
     data = [
         ("tt0000001", "short", "Carmencita", "Carmencita", "0", "1894", None, "1", "Documentary,Short"),
         ("tt0000002", "short", "Le clown", "Le clown", "0", "1892", None, "5", "Animation,Short"),
-        ("tt0000003", "movie", "The Shawshank Redemption", "The Shawshank Redemption",
-         "0", "1994", None, "142", "Drama"),
-        ("tt0000004", "tvSeries", "Breaking Bad", "Breaking Bad",
-         "0", "2008", "2013", "49", "Crime,Drama,Thriller"),
+        (
+            "tt0000003",
+            "movie",
+            "The Shawshank Redemption",
+            "The Shawshank Redemption",
+            "0",
+            "1994",
+            None,
+            "142",
+            "Drama",
+        ),
+        ("tt0000004", "tvSeries", "Breaking Bad", "Breaking Bad", "0", "2008", "2013", "49", "Crime,Drama,Thriller"),
         ("tt0000005", "tvEpisode", "Pilot", "Pilot", "0", "2008", None, "58", "Crime,Drama"),
         ("tt0000006", "movie", "Inception", "Inception", "0", "2010", None, "148", "Action,Sci-Fi,Thriller"),
         ("tt0000007", "movie", "Interstellar", "Interstellar", "0", "2014", None, "169", "Adventure,Drama,Sci-Fi"),
         ("tt0000008", "movie", "The Dark Knight", "The Dark Knight", "0", "2008", None, "152", "Action,Crime,Drama"),
-        ("tt0000009", "tvSeries", "Game of Thrones", "Game of Thrones",
-         "0", "2011", "2019", "57", "Action,Adventure,Drama"),
+        (
+            "tt0000009",
+            "tvSeries",
+            "Game of Thrones",
+            "Game of Thrones",
+            "0",
+            "2011",
+            "2019",
+            "57",
+            "Action,Adventure,Drama",
+        ),
         ("tt0000010", "movie", "Pulp Fiction", "Pulp Fiction", "0", "1994", None, "154", "Crime,Drama"),
         ("tt0000011", "movie", "Fight Club", "Fight Club", "0", "1999", None, "139", "Drama"),
         ("tt0000012", "movie", "Forrest Gump", "Forrest Gump", "0", "1994", None, "142", "Drama,Romance"),
@@ -91,17 +107,19 @@ def titles_raw(spark):
         ("tt0000015", "movie", "Another Recent", "Another Recent", "0", "2023", None, "95", "Comedy"),
     ]
 
-    schema = StructType([
-        StructField("tconst", StringType(), nullable=True),
-        StructField("titleType", StringType(), nullable=True),
-        StructField("primaryTitle", StringType(), nullable=True),
-        StructField("originalTitle", StringType(), nullable=True),
-        StructField("isAdult", StringType(), nullable=True),
-        StructField("startYear", StringType(), nullable=True),
-        StructField("endYear", StringType(), nullable=True),
-        StructField("runtimeMinutes", StringType(), nullable=True),
-        StructField("genres", StringType(), nullable=True),
-    ])
+    schema = StructType(
+        [
+            StructField("tconst", StringType(), nullable=True),
+            StructField("titleType", StringType(), nullable=True),
+            StructField("primaryTitle", StringType(), nullable=True),
+            StructField("originalTitle", StringType(), nullable=True),
+            StructField("isAdult", StringType(), nullable=True),
+            StructField("startYear", StringType(), nullable=True),
+            StructField("endYear", StringType(), nullable=True),
+            StructField("runtimeMinutes", StringType(), nullable=True),
+            StructField("genres", StringType(), nullable=True),
+        ]
+    )
 
     return spark.createDataFrame(data, schema)
 
@@ -109,7 +127,7 @@ def titles_raw(spark):
 @pytest.fixture(scope="module")
 def ratings_raw(spark):
     """Module-scoped ratings fixture for analytics tests."""
-    from pyspark.sql.types import StructType, StructField, StringType
+    from pyspark.sql.types import StringType, StructField, StructType
 
     data = [
         ("tt0000001", "5.7", "1973"),
@@ -129,11 +147,13 @@ def ratings_raw(spark):
         ("tt0000015", "6.8", "30000"),
     ]
 
-    schema = StructType([
-        StructField("tconst", StringType(), nullable=True),
-        StructField("averageRating", StringType(), nullable=True),
-        StructField("numVotes", StringType(), nullable=True),
-    ])
+    schema = StructType(
+        [
+            StructField("tconst", StringType(), nullable=True),
+            StructField("averageRating", StringType(), nullable=True),
+            StructField("numVotes", StringType(), nullable=True),
+        ]
+    )
 
     return spark.createDataFrame(data, schema)
 
@@ -141,19 +161,21 @@ def ratings_raw(spark):
 @pytest.fixture(scope="module")
 def episodes_raw(spark):
     """Module-scoped episodes fixture for analytics tests."""
-    from pyspark.sql.types import StructType, StructField, StringType
+    from pyspark.sql.types import StringType, StructField, StructType
 
     data = [
         ("tt0000005", "tt0000004", "1", "1"),
         ("tt0000013", "tt0000004", "5", "14"),
     ]
 
-    schema = StructType([
-        StructField("tconst", StringType(), nullable=True),
-        StructField("parentTconst", StringType(), nullable=True),
-        StructField("seasonNumber", StringType(), nullable=True),
-        StructField("episodeNumber", StringType(), nullable=True),
-    ])
+    schema = StructType(
+        [
+            StructField("tconst", StringType(), nullable=True),
+            StructField("parentTconst", StringType(), nullable=True),
+            StructField("seasonNumber", StringType(), nullable=True),
+            StructField("episodeNumber", StringType(), nullable=True),
+        ]
+    )
 
     return spark.createDataFrame(data, schema)
 
@@ -161,8 +183,9 @@ def episodes_raw(spark):
 @pytest.fixture(scope="module")
 def tmp_output_dir():
     """Module-scoped temp directory."""
-    import tempfile
     import shutil
+    import tempfile
+
     tmp_dir = tempfile.mkdtemp(prefix="imdb_analytics_test_")
     yield tmp_dir
     shutil.rmtree(tmp_dir, ignore_errors=True)

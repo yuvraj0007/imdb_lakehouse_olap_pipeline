@@ -1,12 +1,16 @@
+import logging
 import sys
 import time
-import logging
 from datetime import datetime
 
-from src.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_DB, LAKE_PATH
+from src.config import CLICKHOUSE_DB, CLICKHOUSE_HOST, CLICKHOUSE_PORT, LAKE_PATH
 from src.olap.connection import get_client, wait_for_clickhouse
+from src.olap.loader import (
+    discover_files,
+    load_parquet_to_clickhouse,
+    populate_aggregation_table,
+)
 from src.olap.schema import ensure_schema
-from src.olap.loader import discover_files, load_parquet_to_clickhouse, populate_aggregation_table
 
 logging.basicConfig(
     level=logging.INFO,

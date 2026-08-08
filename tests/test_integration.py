@@ -15,15 +15,18 @@ from unittest.mock import MagicMock
 import pytest
 from pyspark.sql import functions as F
 
-from src.etl.cleaners import clean_titles, clean_ratings, clean_episodes
+from src.etl.cleaners import clean_episodes, clean_ratings, clean_titles
+from src.etl.schemas import (
+    TITLE_BASICS_SCHEMA,
+    TITLE_EPISODE_SCHEMA,
+    TITLE_RATINGS_SCHEMA,
+)
 from src.etl.transforms import join_datasets, write_parquet
-from src.etl.schemas import TITLE_BASICS_SCHEMA, TITLE_RATINGS_SCHEMA, TITLE_EPISODE_SCHEMA
 
 # Mock clickhouse_connect before importing olap modules
 sys.modules.setdefault("clickhouse_connect", MagicMock())
 from src.olap import loader as load_to_olap  # noqa: E402
 from src.olap import schema as load_to_olap_schema  # noqa: E402
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Full Pipeline End-to-End Test
@@ -59,10 +62,7 @@ class TestFullPipeline:
         )
 
         # title.episode.tsv
-        episode_content = (
-            "tconst\tparentTconst\tseasonNumber\tepisodeNumber\n"
-            "tt0000005\ttt0000004\t1\t1\n"
-        )
+        episode_content = "tconst\tparentTconst\tseasonNumber\tepisodeNumber\n" "tt0000005\ttt0000004\t1\t1\n"
 
         with open(os.path.join(tmp_data_dir, "title.basics.tsv"), "w") as f:
             f.write(basics_content)
@@ -79,8 +79,7 @@ class TestFullPipeline:
         """
         # Step 1: Read raw TSV files
         titles_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -89,8 +88,7 @@ class TestFullPipeline:
         )
 
         ratings_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -99,8 +97,7 @@ class TestFullPipeline:
         )
 
         episodes_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -138,8 +135,7 @@ class TestFullPipeline:
         """Output Parquet should have the expected schema."""
         # Run pipeline
         titles_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -147,8 +143,7 @@ class TestFullPipeline:
             .csv(os.path.join(sample_tsv_dir, "title.basics.tsv"))
         )
         ratings_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -156,8 +151,7 @@ class TestFullPipeline:
             .csv(os.path.join(sample_tsv_dir, "title.ratings.tsv"))
         )
         episodes_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -199,8 +193,7 @@ class TestFullPipeline:
         """Parquet output should be partitioned by title_type and start_year."""
         # Run pipeline
         titles_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -208,8 +201,7 @@ class TestFullPipeline:
             .csv(os.path.join(sample_tsv_dir, "title.basics.tsv"))
         )
         ratings_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -217,8 +209,7 @@ class TestFullPipeline:
             .csv(os.path.join(sample_tsv_dir, "title.ratings.tsv"))
         )
         episodes_raw = (
-            spark.read
-            .option("header", "true")
+            spark.read.option("header", "true")
             .option("sep", "\t")
             .option("nullValue", "\\N")
             .option("quote", "")
@@ -236,7 +227,8 @@ class TestFullPipeline:
 
         # Verify partition directory structure exists
         title_type_dirs = [
-            d for d in os.listdir(output_path)
+            d
+            for d in os.listdir(output_path)
             if d.startswith("title_type=") and os.path.isdir(os.path.join(output_path, d))
         ]
         assert len(title_type_dirs) > 0, "No title_type partition dirs found"
@@ -244,7 +236,8 @@ class TestFullPipeline:
         # Check for start_year subdirectories
         first_type_dir = os.path.join(output_path, title_type_dirs[0])
         start_year_dirs = [
-            d for d in os.listdir(first_type_dir)
+            d
+            for d in os.listdir(first_type_dir)
             if d.startswith("start_year=") and os.path.isdir(os.path.join(first_type_dir, d))
         ]
         assert len(start_year_dirs) > 0, "No start_year partition dirs found"
@@ -277,10 +270,7 @@ class TestDataQuality:
 
         # Check all non-null ratings are in [0, 10]
         invalid_ratings = enriched.filter(
-            (F.col("average_rating").isNotNull())
-            & (
-                (F.col("average_rating") < 0.0) | (F.col("average_rating") > 10.0)
-            )
+            (F.col("average_rating").isNotNull()) & ((F.col("average_rating") < 0.0) | (F.col("average_rating") > 10.0))
         ).count()
         assert invalid_ratings == 0, f"Found {invalid_ratings} ratings outside [0, 10]"
 
@@ -306,9 +296,7 @@ class TestDataQuality:
 
         invalid_years = enriched.filter(
             (F.col("start_year").isNotNull())
-            & (
-                (F.col("start_year") < 1874) | (F.col("start_year") > CURRENT_YEAR + 5)
-            )
+            & ((F.col("start_year") < 1874) | (F.col("start_year") > CURRENT_YEAR + 5))
         ).count()
         assert invalid_years == 0, f"Found {invalid_years} rows with invalid years"
 

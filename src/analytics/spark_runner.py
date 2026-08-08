@@ -1,9 +1,9 @@
-import time
 import logging
+import time
 from typing import Any
 
-from src.config import LAKE_PATH
 from src.analytics.queries import BENCHMARK_QUERIES
+from src.config import LAKE_PATH
 
 logger = logging.getLogger(__name__)
 

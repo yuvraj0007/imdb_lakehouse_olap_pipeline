@@ -1,17 +1,17 @@
-import time
 import logging
+import time
 from typing import Any
 
 import clickhouse_connect
 
+from src.analytics.queries import BENCHMARK_QUERIES
 from src.config import (
+    CLICKHOUSE_DB,
     CLICKHOUSE_HOST,
+    CLICKHOUSE_PASSWORD,
     CLICKHOUSE_PORT,
     CLICKHOUSE_USER,
-    CLICKHOUSE_PASSWORD,
-    CLICKHOUSE_DB,
 )
-from src.analytics.queries import BENCHMARK_QUERIES
 
 logger = logging.getLogger(__name__)
 

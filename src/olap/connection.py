@@ -1,14 +1,14 @@
-import time
 import logging
+import time
 
 import clickhouse_connect
 
 from src.config import (
+    CLICKHOUSE_DB,
     CLICKHOUSE_HOST,
+    CLICKHOUSE_PASSWORD,
     CLICKHOUSE_PORT,
     CLICKHOUSE_USER,
-    CLICKHOUSE_PASSWORD,
-    CLICKHOUSE_DB,
 )
 
 logger = logging.getLogger(__name__)

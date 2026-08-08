@@ -1,7 +1,8 @@
 import logging
 
-from pyspark.sql import DataFrame, functions as F
-from pyspark.sql.types import IntegerType, FloatType
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
+from pyspark.sql.types import FloatType, IntegerType
 
 from src.config import CURRENT_YEAR
 
@@ -27,15 +28,12 @@ def clean_titles(df: DataFrame) -> DataFrame:
         .filter(F.col("tconst").isNotNull())
         .filter(F.col("tconst").startswith("tt"))
         .filter(
-            (F.col("start_year").isNull())
-            | ((F.col("start_year") >= 1874) & (F.col("start_year") <= CURRENT_YEAR + 5))
+            (F.col("start_year").isNull()) | ((F.col("start_year") >= 1874) & (F.col("start_year") <= CURRENT_YEAR + 5))
         )
         .dropDuplicates(["tconst"])
     )
 
-    cleaned = cleaned.withColumn(
-        "genres", F.when(F.col("genres").isNull(), "Unknown").otherwise(F.col("genres"))
-    )
+    cleaned = cleaned.withColumn("genres", F.when(F.col("genres").isNull(), "Unknown").otherwise(F.col("genres")))
 
     row_count = cleaned.count()
     logger.info(f"  {row_count:,} rows after cleaning")
@@ -50,8 +48,7 @@ def clean_ratings(df: DataFrame) -> DataFrame:
         .withColumn("num_votes", F.col("numVotes").cast(IntegerType()))
         .drop("averageRating", "numVotes")
         .filter(
-            (F.col("average_rating").isNull())
-            | ((F.col("average_rating") >= 0.0) & (F.col("average_rating") <= 10.0))
+            (F.col("average_rating").isNull()) | ((F.col("average_rating") >= 0.0) & (F.col("average_rating") <= 10.0))
         )
         .filter((F.col("num_votes").isNull()) | (F.col("num_votes") > 0))
         .filter(F.col("tconst").isNotNull())
