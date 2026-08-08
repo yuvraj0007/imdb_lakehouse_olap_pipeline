@@ -11,7 +11,6 @@ Tests each transformation function in isolation:
 
 import os
 
-import pytest
 from pyspark.sql import functions as F
 from pyspark.sql.types import IntegerType, FloatType
 

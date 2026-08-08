@@ -59,8 +59,6 @@ def load_parquet_to_clickhouse(client, parquet_files: list[str]) -> int:
 
 def _prepare_dataframe(filepath: str):
     """Read parquet file, extract partition columns, normalize for ClickHouse."""
-    import pandas as pd
-
     table = pq.read_table(filepath)
     df = table.to_pandas()
 

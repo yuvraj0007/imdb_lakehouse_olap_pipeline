@@ -5,19 +5,17 @@ Tests that the benchmark queries (from run_analytics.py) execute correctly
 against Spark SQL on sample Parquet data.
 """
 
-import os
 import sys
 from unittest.mock import MagicMock
 
 import pytest
-from pyspark.sql import functions as F
 
 from src.etl.cleaners import clean_titles, clean_ratings, clean_episodes
-from src.etl.transforms import join_datasets, write_parquet
+from src.etl.transforms import join_datasets
 
 sys.modules.setdefault("clickhouse_connect", MagicMock())
 
-from src.analytics.queries import BENCHMARK_QUERIES
+from src.analytics.queries import BENCHMARK_QUERIES  # noqa: E402
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -75,13 +73,16 @@ def titles_raw(spark):
     data = [
         ("tt0000001", "short", "Carmencita", "Carmencita", "0", "1894", None, "1", "Documentary,Short"),
         ("tt0000002", "short", "Le clown", "Le clown", "0", "1892", None, "5", "Animation,Short"),
-        ("tt0000003", "movie", "The Shawshank Redemption", "The Shawshank Redemption", "0", "1994", None, "142", "Drama"),
-        ("tt0000004", "tvSeries", "Breaking Bad", "Breaking Bad", "0", "2008", "2013", "49", "Crime,Drama,Thriller"),
+        ("tt0000003", "movie", "The Shawshank Redemption", "The Shawshank Redemption",
+         "0", "1994", None, "142", "Drama"),
+        ("tt0000004", "tvSeries", "Breaking Bad", "Breaking Bad",
+         "0", "2008", "2013", "49", "Crime,Drama,Thriller"),
         ("tt0000005", "tvEpisode", "Pilot", "Pilot", "0", "2008", None, "58", "Crime,Drama"),
         ("tt0000006", "movie", "Inception", "Inception", "0", "2010", None, "148", "Action,Sci-Fi,Thriller"),
         ("tt0000007", "movie", "Interstellar", "Interstellar", "0", "2014", None, "169", "Adventure,Drama,Sci-Fi"),
         ("tt0000008", "movie", "The Dark Knight", "The Dark Knight", "0", "2008", None, "152", "Action,Crime,Drama"),
-        ("tt0000009", "tvSeries", "Game of Thrones", "Game of Thrones", "0", "2011", "2019", "57", "Action,Adventure,Drama"),
+        ("tt0000009", "tvSeries", "Game of Thrones", "Game of Thrones",
+         "0", "2011", "2019", "57", "Action,Adventure,Drama"),
         ("tt0000010", "movie", "Pulp Fiction", "Pulp Fiction", "0", "1994", None, "154", "Crime,Drama"),
         ("tt0000011", "movie", "Fight Club", "Fight Club", "0", "1999", None, "139", "Drama"),
         ("tt0000012", "movie", "Forrest Gump", "Forrest Gump", "0", "1994", None, "142", "Drama,Romance"),
@@ -183,7 +184,7 @@ class TestBenchmarkQueries:
 
             # Execute the query
             result = spark.sql(spark_sql)
-            rows = result.collect()
+            result.collect()
 
             # Query should execute without error (if we get here, it did)
             assert result is not None, f"Query '{query_name}' returned None"

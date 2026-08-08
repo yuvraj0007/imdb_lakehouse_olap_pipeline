@@ -10,19 +10,10 @@ Tests the full pipeline flow:
 
 import os
 import sys
-import tempfile
-import shutil
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock
 
 import pytest
 from pyspark.sql import functions as F
-from pyspark.sql.types import (
-    StructType,
-    StructField,
-    StringType,
-    IntegerType,
-    FloatType,
-)
 
 from src.etl.cleaners import clean_titles, clean_ratings, clean_episodes
 from src.etl.transforms import join_datasets, write_parquet
@@ -30,8 +21,8 @@ from src.etl.schemas import TITLE_BASICS_SCHEMA, TITLE_RATINGS_SCHEMA, TITLE_EPI
 
 # Mock clickhouse_connect before importing olap modules
 sys.modules.setdefault("clickhouse_connect", MagicMock())
-from src.olap import loader as load_to_olap
-from src.olap import schema as load_to_olap_schema
+from src.olap import loader as load_to_olap  # noqa: E402
+from src.olap import schema as load_to_olap_schema  # noqa: E402
 
 
 # ─────────────────────────────────────────────────────────────────────────────

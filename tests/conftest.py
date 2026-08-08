@@ -2,7 +2,6 @@
 conftest.py - Shared pytest fixtures for IMDb Lakehouse OLAP Pipeline tests.
 """
 
-import os
 import sys
 import shutil
 import tempfile
@@ -13,13 +12,11 @@ import pytest
 # Mock clickhouse_connect before any src imports (olap modules import it)
 sys.modules.setdefault("clickhouse_connect", MagicMock())
 
-from pyspark.sql import SparkSession
-from pyspark.sql.types import (
+from pyspark.sql import SparkSession  # noqa: E402
+from pyspark.sql.types import (  # noqa: E402
     StructType,
     StructField,
     StringType,
-    IntegerType,
-    FloatType,
 )
 
 
@@ -98,16 +95,26 @@ def titles_raw(spark):
     - Row with non-'tt' prefix (should be filtered)
     """
     data = [
-        ("tt0000001", "short", "Carmencita", "Carmencita", "0", "1894", None, "1", "Documentary,Short"),
-        ("tt0000002", "short", "Le clown et ses chiens", "Le clown et ses chiens", "0", "1892", None, "5", "Animation,Short"),
-        ("tt0000003", "movie", "The Great Train Robbery", "The Great Train Robbery", "0", "1903", None, "11", "Action,Crime,Western"),
-        ("tt0000004", "tvSeries", "Breaking Bad", "Breaking Bad", "0", "2008", "2013", "49", "Crime,Drama,Thriller"),
-        ("tt0000005", "tvEpisode", "Pilot", "Pilot", "0", "2008", None, "58", None),  # null genres
-        ("tt0000001", "short", "Carmencita", "Carmencita", "0", "1894", None, "1", "Documentary,Short"),  # duplicate
-        (None, "movie", "No ID Movie", "No ID Movie", "0", "2020", None, "90", "Drama"),  # null tconst
-        ("tt0000006", "movie", "Future Movie", "Future Movie", "0", "9999", None, "120", "Sci-Fi"),  # invalid year (too far)
-        ("tt0000007", "movie", "Ancient Movie", "Ancient Movie", "0", "1800", None, "60", "History"),  # invalid year (too old)
-        ("nm0000001", "movie", "Wrong Prefix", "Wrong Prefix", "0", "2020", None, "90", "Drama"),  # non-'tt' prefix
+        ("tt0000001", "short", "Carmencita", "Carmencita",
+         "0", "1894", None, "1", "Documentary,Short"),
+        ("tt0000002", "short", "Le clown et ses chiens", "Le clown et ses chiens",
+         "0", "1892", None, "5", "Animation,Short"),
+        ("tt0000003", "movie", "The Great Train Robbery", "The Great Train Robbery",
+         "0", "1903", None, "11", "Action,Crime,Western"),
+        ("tt0000004", "tvSeries", "Breaking Bad", "Breaking Bad",
+         "0", "2008", "2013", "49", "Crime,Drama,Thriller"),
+        ("tt0000005", "tvEpisode", "Pilot", "Pilot",
+         "0", "2008", None, "58", None),
+        ("tt0000001", "short", "Carmencita", "Carmencita",
+         "0", "1894", None, "1", "Documentary,Short"),
+        (None, "movie", "No ID Movie", "No ID Movie",
+         "0", "2020", None, "90", "Drama"),
+        ("tt0000006", "movie", "Future Movie", "Future Movie",
+         "0", "9999", None, "120", "Sci-Fi"),
+        ("tt0000007", "movie", "Ancient Movie", "Ancient Movie",
+         "0", "1800", None, "60", "History"),
+        ("nm0000001", "movie", "Wrong Prefix", "Wrong Prefix",
+         "0", "2020", None, "90", "Drama"),
     ]
 
     schema = StructType([
