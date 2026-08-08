@@ -370,39 +370,101 @@ Manual trigger                    Airflow/Dagster orchestration
 ## Quick Start
 
 ### Prerequisites
-- Podman & Podman Compose (or Docker & Docker Compose)
-- Python 3.9+
-- Kaggle API credentials (`~/.kaggle/kaggle.json`)
-- 8GB+ available RAM
 
-### Run the Pipeline
+| Tool | Version | Install |
+|------|---------|---------|
+| Podman | 4.0+ | `brew install podman` |
+| Podman Compose | 1.0+ | `brew install podman-compose` |
+| Python | 3.9 - 3.12 | `brew install python@3.12` |
+| Java | 11+ (for local Spark tests) | `brew install openjdk@17` |
+| Make | any | Pre-installed on macOS/Linux |
+
+### Step-by-Step Local Setup
 
 ```bash
-# 1. Clone and enter the project
+# 1. Clone the repository
+git clone https://github.com/yuvraj0007/imdb_lakehouse_olap_pipeline.git
 cd imdb_lakehouse_olap_pipeline
 
-# 2. Set up environment
+# 2. Create environment file
 cp .env.example .env
-# Edit .env with your Kaggle credentials if needed
 
-# 3. Download the IMDb dataset
+# 3. Set up Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 4. Start Podman machine (macOS only)
+podman machine init    # first time only
+podman machine start
+
+# 5. Download IMDb dataset from Kaggle
+#    Option A: Via Kaggle API (needs ~/.kaggle/kaggle.json)
 make download
 
-# 4. Start infrastructure
+#    Option B: Manual download
+#    Go to https://www.kaggle.com/datasets/ashirwadsangwan/imdb-dataset
+#    Download and extract to data/raw/
+#    Required files: title.basics.tsv, title.ratings.tsv, title.episode.tsv
+
+# 6. Build and start all services (Spark, ClickHouse, Prometheus, Grafana)
 make up
 
-# 5. Run the ETL pipeline
+# 7. Run the ETL pipeline (PySpark on Spark cluster)
 make etl
 
-# 6. Load data into ClickHouse
+# 8. Load processed data into ClickHouse
 make load
 
-# 7. Run analytics queries
+# 9. Run analytics benchmark (Spark vs ClickHouse performance)
 make analytics
 
-# 8. Stop infrastructure
-make down
+# 10. Open dashboards
+#     Analytics:  http://localhost:3000/d/imdb-analytics
+#     Monitoring: http://localhost:3000/d/imdb-pipeline-overview
+#     Spark UI:   http://localhost:8085
+#     ClickHouse: http://localhost:8123
 ```
+
+### Running Tests Locally
+
+```bash
+source .venv/bin/activate
+
+# Run all 45 tests
+make test
+
+# Run with coverage report
+make test-cov
+
+# Run only unit tests
+make test-unit
+
+# Run only integration tests
+make test-integration
+```
+
+### Useful Commands
+
+```bash
+make help           # Show all available commands
+make status         # Check running services
+make shell-ch       # Open ClickHouse SQL shell
+make pyspark        # Open PySpark interactive shell
+make down           # Stop all services
+make clean          # Remove generated data (lake/)
+make clean-all      # Remove everything and stop services
+```
+
+### Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Port 8080 in use | Change Spark UI port in docker-compose.yml |
+| Podman not connecting | `podman machine start` |
+| ClickHouse "table not found" | Tables auto-create on container start. Try `make down && make up` |
+| Tests fail with pickle error | Use Python 3.12 (not 3.14). PySpark 3.5 doesn't support 3.13+ |
+| Kaggle download fails | Place `kaggle.json` in `~/.kaggle/` or download manually |
 
 ---
 
