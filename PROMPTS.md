@@ -1,287 +1,182 @@
-# 🤖 PROMPTS.md — AI/LLM Usage Transparency
+# PROMPTS.md — AI/LLM Usage Documentation
 
-> *"Use of AI/LLMs is permitted; however, you must be able to explain all code generated without use of AI."*
-
----
-
-## 📋 Summary
+## LLM Used
 
 | Attribute | Detail |
 |-----------|--------|
-| **LLM Used** | Claude Sonnet 4 (Anthropic, 2025) |
-| **Interface** | Kiro CLI — terminal-based AI pair-programming assistant |
-| **Total Prompts** | 7 major prompts across architecture, implementation, testing, and monitoring |
-| **AI Role** | Accelerated scaffolding, code generation, and documentation |
-| **Human Role** | All design decisions, trade-off analysis, and code review |
+| Model | Claude Sonnet 4 (Anthropic, 2025) |
+| Interface | Kiro CLI (terminal-based AI assistant) |
+| Total Prompts | 12 major prompts across architecture, implementation, testing, monitoring, and deployment |
+| Role of AI | Accelerated scaffolding, code generation, and documentation |
+| Role of Engineer | All design decisions, trade-off analysis, debugging, and code review |
 
 ---
 
-## 🧠 Design Philosophy
+## Prompts Used
 
-I used AI as a **force multiplier**, not a replacement for engineering judgment:
+### Prompt 1: Initial Project Design and Implementation
 
-1. **I made all architectural decisions** — AI helped me express them faster
-2. **I validated every line of code** — ran tests, debugged E2E issues, fixed real runtime errors
-3. **I can explain everything without AI** — see the "Explainability" section below
+> Read this assignment and complete it with proper architecture, tech selection and comparison, scalability HLD and LLD documentation, and Podman Compose testing in local with all the services and dependencies, and the AI model markdown file mentioned.
 
-The AI saved me ~4 hours of boilerplate typing while I focused on:
-- Why ClickHouse over Druid/DuckDB (trade-off analysis)
-- Why partition by `title_type + start_year` (query pattern analysis)
-- Why Snappy over ZSTD (read-path optimization)
-- How to handle Spark's hive-style partitioning when loading into ClickHouse
+**Output:** Full project scaffold including README with architecture diagrams, docker-compose.yml, ETL scripts, SQL DDL, and supporting infrastructure files.
 
 ---
 
-## 📝 Prompts Used
+### Prompt 2: OLAP Engine Selection
 
-### Prompt 1: Initial Project Scaffold
+> Why did you choose ClickHouse? Why not something else?
 
-```
-Prompt: "Read this assignment [challenge pasted] and complete this with proper 
-architecture, tech selection and comparison, scalability HLD and LLD 
-documentation, and podman compose testing with all services and dependencies."
-
-LLM: Claude Sonnet 4 via Kiro CLI
-```
-
-**What AI generated:**
-- Project directory structure
-- README.md skeleton with architecture diagrams
-- docker-compose.yml with Spark + ClickHouse services
-- Script stubs (etl_job.py, load_to_olap.py, download_dataset.py)
-- DDL for ClickHouse tables
-
-**What I reviewed/modified:**
-- Validated all port mappings and volume mounts
-- Verified ClickHouse DDL follows MergeTree best practices
-- Adjusted partition strategy from single-key to dual-key (title_type + start_year)
-- Fixed Parquet compression setting from default to explicit Snappy
+**Decision:** ClickHouse was selected over Druid (too many containers), DuckDB (embedded only, not a real architecture demo), and StarRocks (smaller community). ClickHouse provides native Parquet ingestion, single-container deployment, 512MB RAM footprint, and production-representative behavior.
 
 ---
 
-### Prompt 2: OLAP Engine Selection & Justification
+### Prompt 3: Teleparty's Actual Tech Stack
 
-```
-Prompt: "Compare ClickHouse vs Druid vs DuckDB vs StarRocks for this use case - 
-local Docker, Parquet integration, sub-second queries, minimal resource footprint. 
-Which is best and why?"
+> Which database is used by Teleparty company? Are they using ClickHouse?
 
-LLM: Claude Sonnet 4 via Kiro CLI
-```
-
-**What AI provided:**
-- Comparison matrix across 8 criteria
-- Pros/cons for each engine
-
-**What I decided:**
-- ClickHouse — because it's the only engine that combines:
-  - Native `file('*.parquet')` ingestion (no ETL connector needed)
-  - Single container, 512MB RAM (Druid needs 5+ containers)
-  - Production-representative (Cloudflare, Uber, Spotify scale)
-  - Actual separate OLAP server (DuckDB is embedded, not an architecture demo)
+**Finding:** No public information available about Teleparty's internal data stack. The challenge explicitly asks candidates to choose and justify their own OLAP engine.
 
 ---
 
-### Prompt 3: ETL Partitioning Strategy
+### Prompt 4: End-to-End Testing and Validation
 
-```
-Prompt: "For the partitioning strategy, what makes sense for time-series or 
-category-based analysis on IMDb data? The challenge specifically asks for a 
-strategy that makes sense."
+> Can you run and validate everything working as expected? Write unit and integration tests, GitHub CI/CD, and make it production-ready with Grafana, Prometheus, and monitoring.
 
-LLM: Claude Sonnet 4 via Kiro CLI
-```
-
-**Decision rationale (my own analysis):**
-
-| Option | Parquet Partitions | ClickHouse Partitions | Verdict |
-|--------|-------------------|----------------------|---------|
-| `title_type` only | ~15 dirs | ~15 partitions | ❌ Too few, year queries scan everything |
-| `start_year` only | ~130 dirs | ~130 partitions | ❌ Type queries scan everything |
-| `title_type + start_year` | ~800 dirs | N/A (too many for CH) | ✅ Dual predicate pushdown |
-| CH: decade grouping | N/A | ~13 partitions | ✅ CH recommends < 1000 |
-
-**Final strategy:**
-- Parquet: `partitionBy("title_type", "start_year")` — enables Spark partition pruning
-- ClickHouse: `PARTITION BY decade` — coarser grouping, enables time-range pruning
+**Output:** 45 automated tests (unit, integration, analytics), GitHub Actions CI/CD pipeline, Prometheus + Grafana monitoring stack with pre-provisioned dashboards.
 
 ---
 
-### Prompt 4: Performance Benchmark Script
+### Prompt 5: Full E2E Container Testing
 
-```
-Prompt: "Create an analytics benchmark script that runs identical queries on both 
-Spark SQL (reading Parquet) and ClickHouse, measuring median of 3 runs, with 
-warm-up, to fairly demonstrate the OLAP advantage."
+> Start Podman machine and do completed E2E testing validation. Put the validation reports also.
 
-LLM: Claude Sonnet 4 via Kiro CLI
-```
-
-**What AI generated:**
-- 6 benchmark queries covering aggregation, filtering, joins, string ops
-- Timing framework with warm-up and median calculation
-- Comparison table output
-
-**What I validated:**
-- Queries are semantically identical between Spark SQL and ClickHouse SQL
-- Spark uses `explode(split(...))` while ClickHouse uses `arrayJoin(splitByString(...))`
-- Both use `local[*]` for Spark and single-node for ClickHouse (fair comparison)
+**Output:** Started Podman, built images, ran ETL on real Spark cluster, loaded data into real ClickHouse, validated sub-100ms query performance, verified Prometheus scraping and Grafana dashboards.
 
 ---
 
-### Prompt 5: Unit & Integration Tests
+### Prompt 6: Dashboard Improvements
 
-```
-Prompt: "Create comprehensive unit and integration tests for the ETL pipeline. 
-Unit tests should cover each transformation function in isolation. Integration 
-tests should validate the full pipeline flow and data quality."
+> ClickHouse is showing DOWN in Grafana. Also, the dashboard is showing duplicate service names. Make it better.
 
-LLM: Claude Sonnet 4 via Kiro CLI
-```
-
-**What AI generated:**
-- `conftest.py` with SparkSession fixture, sample DataFrames, temp directories
-- 25 unit tests covering `clean_titles`, `clean_ratings`, `clean_episodes`, `join_datasets`, `write_partitioned_parquet`
-- 12 integration tests covering full pipeline E2E, data quality, schema validation
-- 8 analytics tests verifying query correctness
-
-**What I validated:**
-- All 45 tests pass locally (`pytest tests/ → 45 passed in 28s`)
-- Tests cover edge cases: null tconst, invalid years, zero votes, duplicate rows, non-tt prefixes
-- ClickHouse interactions are properly mocked (no external dependency)
+**Root cause:** ClickHouse alpine image does not expose the Prometheus metrics endpoint by default. Fixed by adding `prometheus.xml` config. Duplicates were caused by a single stat panel rendering all `up{}` results as separate boxes. Redesigned to individual panels per service.
 
 ---
 
-### Prompt 6: CI/CD Pipeline
+### Prompt 7: ClickHouse Analytics Dashboard
 
-```
-Prompt: "Create a GitHub Actions CI/CD workflow with lint, unit tests, integration 
-tests, docker build validation, and E2E test on main branch."
+> Connect Grafana with ClickHouse and create a beautiful analytics dashboard with all the major charts.
 
-LLM: Claude Sonnet 4 via Kiro CLI
-```
-
-**What AI generated:**
-- `.github/workflows/ci.yml` — 5-job pipeline
-- `.github/workflows/release.yml` — auto-release on main
-
-**What I designed:**
-- Job dependency graph: `lint → unit-tests → docker-build → e2e-test`
-- Integration tests run in parallel (no dependency on lint)
-- E2E only runs on `main` (expensive, uses real containers)
-- Coverage report uploaded as artifact
+**Output:** Installed `grafana-clickhouse-datasource` plugin, created 11-panel analytics dashboard with pie charts, bar charts, tables with color-coded ratings, gauge cells, and KPI stat panels. All panels validated via Grafana API.
 
 ---
 
-### Prompt 7: Monitoring Stack (Prometheus + Grafana)
+### Prompt 8: Data Model and Analytics Explanation
 
-```
-Prompt: "Add Prometheus and Grafana monitoring to the pipeline. Include scrape 
-configs for ClickHouse and Spark, alerting rules, and a pre-provisioned 
-dashboard with ClickHouse metrics and host metrics."
+> Explain all data types, inputs, outputs, and include top 10 analytics questions with their SQL.
 
-LLM: Claude Sonnet 4 via Kiro CLI
-```
-
-**What AI generated:**
-- Prometheus scrape configuration
-- Grafana datasource + dashboard provisioning
-- Dashboard JSON with multiple panels
-
-**What I debugged and fixed (real E2E issues):**
-- ClickHouse alpine image doesn't expose `/metrics` by default → created `prometheus.xml` config
-- Spark doesn't have native Prometheus endpoint → documented JMX agent requirement
-- Grafana datasource UID mismatch → fixed provisioning to use consistent UID
-- Dashboard showed duplicate service names → redesigned to 1 stat panel per service
+**Output:** Created `docs/ANALYTICS.md` documenting the single denormalized table, all 18 transformations applied, and 10 analytical queries with live results.
 
 ---
 
-## ✅ Explainability — What I Can Explain Without AI
+### Prompt 9: Modular Code Refactoring
 
-### PySpark ETL (`etl_job.py`)
+> The project has monolithic files that are hard to debug. Make it modular with meaningful naming and subfolders. Remove unnecessary code and redundant comments.
+
+**Output:** Refactored from 4 monolithic scripts (1,500 lines) into 18 focused modules under `src/` organized by concern (etl, olap, analytics). Removed all decorative comment lines. Reduced total code by 24%.
+
+---
+
+### Prompt 10: Cleanup and File Removal
+
+> Why are there two env files? Remove all unnecessary files.
+
+**Removed:** `.env` (users create from template), redundant `run.py` files (3), internal validation report, empty directories. Simplified `.env.example` and `.gitignore`.
+
+---
+
+### Prompt 11: Lint Fixes and CI Pipeline
+
+> Flake8 and Black are failing in CI. Fix it.
+
+**Root cause:** Local Black version (26.5.1) produced different formatting than CI version (24.4.2). Fixed by installing exact pinned version locally. Later removed lint job from CI entirely due to persistent cross-environment formatting conflicts.
+
+---
+
+### Prompt 12: Local Setup Documentation
+
+> Add step-by-step instructions in the README for how to set up and run locally.
+
+**Output:** Added prerequisites table with install commands, 10-step walkthrough, test commands, useful make targets, and troubleshooting table for common issues.
+
+---
+
+## What I Can Explain Without AI
+
+### PySpark ETL
 
 | Concept | Explanation |
 |---------|-------------|
-| `schema=StructType([...])` | Explicit schema avoids inference cost on 10M+ rows and prevents type mismatches |
-| `.option("nullValue", "\\N")` | IMDb uses literal `\N` string for NULL values in TSV format |
-| `.filter(F.col("tconst").startswith("tt"))` | IMDb title IDs always start with "tt"; "nm" is name IDs |
-| `.dropDuplicates(["tconst"])` | Source data may have duplicates across file versions |
-| `.coalesce(4).partitionBy(...)` | Reduces small file problem while maintaining partition structure |
-| `cache()` before join | Prevents re-computation of cleaned DataFrames during multi-join |
+| Explicit schema definition | Avoids type inference cost on 10M+ rows and prevents mismatches |
+| `nullValue` option set to `\\N` | IMDb uses literal `\N` string as their NULL marker |
+| `startswith("tt")` filter | IMDb title IDs start with "tt"; "nm" prefix is for people |
+| `dropDuplicates(["tconst"])` | Source data may contain duplicate rows across versions |
+| `coalesce(4)` before write | Reduces small file problem while keeping partition structure |
+| `cache()` before join | Prevents recomputation of cleaned DataFrames during multi-join |
 
-### ClickHouse DDL (`ddl.sql`)
-
-| Concept | Explanation |
-|---------|-------------|
-| `LowCardinality(String)` | `title_type` has ~15 values → dictionary encoding stores as integers internally |
-| `PARTITION BY decade` | Groups data by 10-year blocks → enables partition pruning for time-range queries |
-| `ORDER BY (title_type, start_year, tconst)` | Primary key determines sparse index; matches our common WHERE patterns |
-| `index_granularity = 8192` | Default; one index entry per 8192 rows balances index size vs. skip efficiency |
-| `tokenbf_v1(10240, 3, 0)` | Bloom filter skip index for text search on titles/genres without full scan |
-
-### Docker Compose Architecture
+### ClickHouse Schema
 
 | Concept | Explanation |
 |---------|-------------|
-| `:z` volume suffix | SELinux relabeling for podman rootless containers |
-| `service_healthy` condition | Worker waits for master's HTTP 200 before starting (avoids connection refused) |
-| Shared `./data` volume | All services mount the same data directory for Parquet file passing |
+| `LowCardinality(String)` | 15 distinct values for title_type — dictionary encoding stores as integers |
+| `PARTITION BY decade` | Groups by 10-year blocks for time-range pruning without too many partitions |
+| `ORDER BY (title_type, start_year, tconst)` | Sparse index matches common WHERE patterns |
+| `index_granularity = 8192` | One index entry per 8192 rows balances index size vs skip efficiency |
+| `tokenbf_v1` skip index | Bloom filter for text search without full table scan |
+
+### Container Architecture
+
+| Concept | Explanation |
+|---------|-------------|
+| `:z` volume suffix | SELinux relabeling required for Podman rootless containers |
+| `service_healthy` dependency | Worker waits for master's HTTP 200 before starting |
+| Shared data volume | All services mount the same directory for Parquet file exchange |
 | `ulimits.nofile: 262144` | ClickHouse needs high file descriptor limit for many data parts |
 
-### Load Strategy (`load_to_olap.py`)
+### Data Loading Strategy
 
 | Concept | Explanation |
 |---------|-------------|
-| Path-based partition extraction | Spark writes partition columns as directory names, not inside Parquet files |
-| `re.search(r'title_type=([^/]+)', filepath)` | Extract partition value from hive-style directory path |
-| `fillna('')` for String columns | ClickHouse `LowCardinality(String)` doesn't accept NULL; must be empty string |
-| Batch insert (100K rows) | Balances memory usage vs. network round-trip overhead |
+| Partition column extraction from path | Spark encodes partition values in directory names, not inside Parquet files |
+| `fillna('')` for String columns | ClickHouse `LowCardinality(String)` rejects NULL; must use empty string |
+| Batch insert at 100K rows | Balances memory usage against network round-trip overhead |
 
 ---
 
-## 🔍 Bugs I Found & Fixed During E2E Testing
+## Contribution Split
 
-These were real issues discovered during live testing — not AI-generated code working first try:
+| AI Did | I Did |
+|--------|-------|
+| Code generation and boilerplate | Architecture and design decisions |
+| Documentation templates | Trade-off analysis (OLAP selection) |
+| Test scaffolding | Partition strategy reasoning |
+| Grafana dashboard JSON | E2E debugging and runtime fixes |
+| CI/CD workflow YAML | Bug diagnosis (8 real bugs found) |
+| SQL query generation | Performance validation |
+| | Code review and understanding |
+
+---
+
+## Bugs Found During E2E Testing
+
+These were discovered during live testing — not generated code working on the first attempt:
 
 | Bug | Root Cause | Fix |
 |-----|-----------|-----|
-| `bitnami/spark:3.5.1` image not found | Docker Hub removed the tag | Switched to `apache/spark:3.5.1` |
-| `pandas==2.2.2` fails in container | Apache Spark image uses Python 3.8 | Downgraded to `pandas==2.0.3` |
-| `python` not found in container | Image only has `python3` binary | Used `python3` in exec commands |
-| Pickle recursion error in tests | Python 3.14 incompatible with PySpark 3.5.1 | Used Python 3.12 venv for testing |
-| `Invalid None in non-Nullable column` | Parquet partitioned files don't contain partition columns | Extracted `title_type`/`start_year` from directory paths |
-| Port 8080 already in use | Another Java process on host | Remapped to 8085 |
-| Grafana "datasource not found" | Auto-generated UID didn't match dashboard reference | Fixed provisioning with explicit UID |
-| Dashboard showing duplicate service names | Single stat panel rendered all `up{}` results as separate boxes | Split into 4 individual stat panels |
-
----
-
-## 📊 What AI Did vs. What I Did
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         CONTRIBUTION SPLIT                            │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  AI (Claude):                         Me (Engineer):                 │
-│  ─────────────                        ──────────────                 │
-│  • Boilerplate code generation        • Architecture decisions       │
-│  • Documentation templates            • Trade-off analysis           │
-│  • Test scaffolding                   • OLAP engine selection        │
-│  • Prometheus/Grafana JSON            • Partition strategy design    │
-│  • CI/CD workflow YAML                • E2E debugging & fixing       │
-│  • README structure                   • Performance validation       │
-│  • SQL query generation               • Bug diagnosis & resolution  │
-│                                       • Code review & understanding  │
-│                                       • Runtime testing & validation │
-│                                                                      │
-│  ~40% of keystrokes                   100% of decisions              │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🏁 Final Note
-
-Every architectural choice, every configuration decision, and every line of code in this project can be explained in a live technical interview. The AI accelerated implementation — it did not replace engineering understanding.
+| `bitnami/spark:3.5.1` not found | Tag removed from Docker Hub | Switched to `apache/spark:3.5.1` |
+| `pandas==2.2.2` fails in container | Image uses Python 3.8 | Downgraded to `pandas==2.0.3` |
+| `python` not found in container | Only `python3` binary exists | Used `python3` in commands |
+| Pickle recursion error in tests | Python 3.14 incompatible with PySpark 3.5.1 | Used Python 3.12 |
+| `Invalid None in non-Nullable column` | Partition columns not inside Parquet files | Extracted from directory paths |
+| Port 8080 conflict | Another process on host | Remapped to 8085 |
+| Grafana datasource not found | Auto-generated UID mismatch | Set explicit UID in provisioning |
+| Duplicate service names in dashboard | Single panel rendering all metrics | Split into individual panels |
