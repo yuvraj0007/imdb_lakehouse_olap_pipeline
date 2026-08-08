@@ -13,11 +13,7 @@ import pytest
 sys.modules.setdefault("clickhouse_connect", MagicMock())
 
 from pyspark.sql import SparkSession  # noqa: E402
-from pyspark.sql.types import (  # noqa: E402
-    StringType,
-    StructField,
-    StructType,
-)
+from pyspark.sql.types import StringType, StructField, StructType  # noqa: E402
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SparkSession Fixture
